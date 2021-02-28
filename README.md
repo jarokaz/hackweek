@@ -21,6 +21,14 @@ From the AI Platform Notebooks instance terminal:
 pip install -U google-cloud-aiplatform --user
 ```
 
+
+### Install Model Garden
+
+```
+pip install tf-models-official tensorflow-text
+```
+
+
 ### Cloning TF Model Garden repo
 
 ```
