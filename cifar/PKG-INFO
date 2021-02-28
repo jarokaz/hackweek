@@ -1,0 +1,10 @@
+Metadata-Version: 1.0
+Name: Custom Training CIFAR-10
+Version: 0.0.0
+Summary: Demostration training script
+Home-page: www.google.com
+Author: Google
+Author-email: aferlitsch@google.com
+License: Public
+Description: Demo
+Platform: AI Platform (Unified)
