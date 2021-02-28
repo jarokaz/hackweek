@@ -25,7 +25,7 @@ pip install -U google-cloud-aiplatform --user
 ### Install Model Garden
 
 ```
-pip install tf-models-official tensorflow-text
+pip install tf-models-official tensorflow-text --user
 ```
 
 
