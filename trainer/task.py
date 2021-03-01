@@ -29,8 +29,8 @@ TFHUB_HANDLE_PREPROCESS = 'https://tfhub.dev/tensorflow/bert_en_uncased_preproce
 LOCAL_TB_FOLDER = '/tmp/logs'
 
 FLAGS = flags.FLAGS
-flags.DEFINE_integer('steps_per_epoch', 10, 'Steps per training epoch')
-flags.DEFINE_integer('eval_steps', 5, 'Evaluation steps')
+flags.DEFINE_integer('steps_per_epoch', 625, 'Steps per training epoch')
+flags.DEFINE_integer('eval_steps', 150, 'Evaluation steps')
 flags.DEFINE_integer('epochs', 2, 'Nubmer of epochs')
 flags.DEFINE_integer('per_replica_batch_size', 32, 'Per replica batch size')
 flags.DEFINE_string('training_data_path', 'gs://jk-demos-bucket/tfrecords/train', 'Training data GCS path')
@@ -144,10 +144,15 @@ def main(argv):
                          FLAGS.per_replica_batch_size)
     
     
+    train_ds, valid_ds, test_ds = create_input_pipelines(
+        FLAGS.training_data_path,
+        FLAGS.validation_data_path,
+        FLAGS.testing_data_path,
+        global_batch_size)
+        
     num_train_steps = FLAGS.steps_per_epoch * FLAGS.epochs
     num_warmup_steps = int(0.1*num_train_steps)
     init_lr = 3e-5
-    seed = 42
     
     with strategy.scope():
         model = build_classifier_model(TFHUB_HANDLE_PREPROCESS, TFHUB_HANDLE_ENCODER)
@@ -162,12 +167,6 @@ def main(argv):
         model.compile(optimizer=optimizer,
                       loss=loss,
                       metrics=metrics)
-        
-        train_ds, valid_ds, test_ds = create_input_pipelines(
-            FLAGS.training_data_path,
-            FLAGS.validation_data_path,
-            FLAGS.testing_data_path,
-            global_batch_size)
         
 
         
