@@ -186,7 +186,8 @@ def main(argv):
                         validation_data=valid_ds,
                         steps_per_epoch=FLAGS.steps_per_epoch,
                         validation_steps=FLAGS.eval_steps,
-                        epochs=FLAGS.epochs)
+                        epochs=FLAGS.epochs,
+                        callbacks=callbacks)
 
     saved_model_dir = '{}/saved_model'.format(FLAGS.job_dir)
     logging.info('Training completed. Saving the trained model to: {}'.format(saved_model_dir))
