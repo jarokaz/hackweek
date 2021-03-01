@@ -177,8 +177,8 @@ def main(argv):
     
     # Configure TensorBoard callback on Chief
     if FLAGS.is_chief:
-        callbacks.append(tf.keras.callbacks.Tensorboard(
-            log_dir=LOCAL_TB_DIR, update_freq='batch'))
+        callbacks.append(tf.keras.callbacks.TensorBoard(
+            log_dir=LOCAL_TB_FOLDER, update_freq='batch'))
     
     logging.info('Starting training ...')
     
@@ -188,14 +188,15 @@ def main(argv):
                         validation_steps=FLAGS.eval_steps,
                         epochs=FLAGS.epochs)
 
-    saved_model_dir = '{}/saved_model'.fornat(FLAGS.job_dir)
+    saved_model_dir = '{}/saved_model'.format(FLAGS.job_dir)
     logging.info('Training completed. Saving the trained model to: {}'.format(saved_model_dir))
-    model.save
+    model.save(saved_model_dir)
     
     # Copy tensorboard logs to GCS
     if FLAGS.is_chief:
         tb_logs = '{}/tb_logs'.format(FLAGS.job_dir)
-        copy_tensorboard_logs(LOCAL_TB_DIR, tb_logs)
+        logging.info('Copying TensorBoard logs to: {}'.format(tb_logs))
+        copy_tensorboard_logs(LOCAL_TB_FOLDER, tb_logs)
         
     
 if __name__ == '__main__':
