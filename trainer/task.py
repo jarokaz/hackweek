@@ -38,7 +38,7 @@ flags.DEFINE_string('validation_data_path', 'gs://jk-demos-bucket/tfrecords/vali
 flags.DEFINE_string('testing_data_path', 'gs://jk-demos-bucket/data/imdb/test', 'Testing data GCS path')
 
 flags.DEFINE_string('job_dir', 'gs://jk-demos-bucket/jobs', 'A base GCS path for jobs')
-flags.DEFINE_enum('strategy', 'mirrored', ['mirrored', 'multiworker'], 'Distribution strategy')
+flags.DEFINE_enum('strategy', 'multiworker', ['mirrored', 'multiworker'], 'Distribution strategy')
 
 
 
@@ -130,7 +130,8 @@ def main(argv):
     del argv
     
     def _is_chief(task_type, task_id):
-        return (task_type == 'chief' and task_id == 0) or task_type is None
+        #return (task_type == 'chief' and task_id == 0) or task_type is None
+        return False
     
     logging.info('Setting up training.')
     logging.info('   epochs: {}'.format(FLAGS.epochs))
@@ -148,7 +149,7 @@ def main(argv):
                               strategy.cluster_resolver.task_id)
     else:
         task_type, task_id =(None, None)
-    
+        
     
     global_batch_size = (strategy.num_replicas_in_sync *
                          FLAGS.per_replica_batch_size)
@@ -193,8 +194,8 @@ def main(argv):
                         validation_data=valid_ds,
                         steps_per_epoch=FLAGS.steps_per_epoch,
                         validation_steps=FLAGS.eval_steps,
-                        epochs=FLAGS.epochs,
-                        callbacks=callbacks)
+                        epochs=FLAGS.epochs,)
+                        #callbacks=callbacks)
 
     if _is_chief(task_type, task_id):
         # Save trained model
