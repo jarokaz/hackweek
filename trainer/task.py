@@ -144,8 +144,8 @@ def main(argv):
     del argv
     
     def _is_chief(task_type, task_id):
-        #return (task_type == 'chief' and task_id == 0) or task_type is None
-        return False
+        return ((task_type == 'chief' or task_type == 'worker') and task_id == 0) or task_type is None
+        
     
     logging.info('Setting up training.')
     logging.info('   epochs: {}'.format(FLAGS.epochs))
@@ -209,8 +209,8 @@ def main(argv):
                         validation_data=valid_ds,
                         steps_per_epoch=FLAGS.steps_per_epoch,
                         validation_steps=FLAGS.eval_steps,
-                        epochs=FLAGS.epochs,)
-                        #callbacks=callbacks)
+                        epochs=FLAGS.epochs,
+                        callbacks=callbacks)
 
     if _is_chief(task_type, task_id):
         # Save trained model
