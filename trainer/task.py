@@ -149,12 +149,6 @@ def main(argv):
     else:
         task_type, task_id =(None, None)
     
-    print('*************')
-    print(task_type, ' ', task_id)
-    print('**************')
-    print(strategy.num_replicas_in_sync)
-    
-    return
     
     global_batch_size = (strategy.num_replicas_in_sync *
                          FLAGS.per_replica_batch_size)
