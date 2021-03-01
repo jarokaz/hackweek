@@ -27,6 +27,7 @@ from official.nlp import optimization
 TFHUB_HANDLE_ENCODER = 'https://tfhub.dev/tensorflow/bert_en_uncased_L-12_H-768_A-12/3'
 TFHUB_HANDLE_PREPROCESS = 'https://tfhub.dev/tensorflow/bert_en_uncased_preprocess/3'
 LOCAL_TB_FOLDER = '/tmp/logs'
+LOCAL_SAVED_MODEL_DIR = '/tmp/saved_model'
 
 FLAGS = flags.FLAGS
 flags.DEFINE_integer('steps_per_epoch', 625, 'Steps per training epoch')
@@ -213,16 +214,20 @@ def main(argv):
                         callbacks=callbacks)
 
     if _is_chief(task_type, task_id):
-        # Save trained model
-        saved_model_dir = '{}/saved_model'.format(FLAGS.job_dir)
-        logging.info('Training completed. Saving the trained model to: {}'.format(saved_model_dir))
-        model.save(saved_model_dir)
-    
         # Copy tensorboard logs to GCS
         tb_logs = '{}/tb_logs'.format(FLAGS.job_dir)
         logging.info('Copying TensorBoard logs to: {}'.format(tb_logs))
         copy_tensorboard_logs(LOCAL_TB_FOLDER, tb_logs)
+        saved_model_dir = '{}/saved_model'.format(FLAGS.job_dir)
+    else:
+        saved_model_dir = LOCAL_SAVED_MODEL_DIR
         
+    # Save trained model
+    saved_model_dir = '{}/saved_model'.format(FLAGS.job_dir)
+    logging.info('Training completed. Saving the trained model to: {}'.format(saved_model_dir))
+    model.save(saved_model_dir)
+    #tf.saved_model.save(model, saved_model_dir)
+    
     
 if __name__ == '__main__':
     logging.set_verbosity(logging.INFO)
