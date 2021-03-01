@@ -130,7 +130,7 @@ def main(argv):
     del argv
     
     def _is_chief(task_type, task_id):
-        return (task_type == 'worker' and task_id == 0) or task_type is None
+        return (task_type == 'chief' and task_id == 0) or task_type is None
     
     logging.info('Setting up training.')
     logging.info('   epochs: {}'.format(FLAGS.epochs))
