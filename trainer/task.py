@@ -39,8 +39,16 @@ flags.DEFINE_string('testing_data_path', 'gs://jk-demos-bucket/data/imdb/test', 
 
 flags.DEFINE_string('job_dir', 'gs://jk-demos-bucket/jobs', 'A base GCS path for jobs')
 flags.DEFINE_enum('strategy', 'multiworker', ['mirrored', 'multiworker'], 'Distribution strategy')
+flags.DEFINE_enum('auto_shard_policy', 'auto', ['auto', 'data', 'file', 'off'], 'Dataset sharing strategy')
 
 
+
+auto_shard_policy = {
+    'auto': tf.data.experimental.AutoShardPolicy.AUTO,
+    'data': tf.data.experimental.AutoShardPolicy.DATA,
+    'file': tf.data.experimental.AutoShardPolicy.FILE,
+    'off': tf.data.experimental.AutoShardPolicy.OFF,
+}
 
 
 def create_unbatched_dataset(tfrecords_folder):
@@ -63,30 +71,36 @@ def create_unbatched_dataset(tfrecords_folder):
     return dataset
 
 
-def configure_dataset_for_performance(ds):
+def configure_dataset(ds, auto_shard_policy):
     """
     Optimizes the performance of a dataset.
     """
     
-    ds = ds.cache()
+    options = tf.data.Options()
+    options.experimental_distribute.auto_shard_policy = (
+        auto_shard_policy
+    )
+    
+    ds = ds.repeat(-1).cache()
     ds = ds.prefetch(buffer_size=tf.data.AUTOTUNE)
+    ds = ds.with_options(options)
     return ds
 
 
-def create_input_pipelines(train_dir, valid_dir, test_dir, batch_size):
+def create_input_pipelines(train_dir, valid_dir, test_dir, batch_size, auto_shard_policy):
     """Creates input pipelines from Imdb dataset."""
     
     train_ds = create_unbatched_dataset(train_dir)
     train_ds = train_ds.batch(batch_size)
-    train_ds = configure_dataset_for_performance(train_ds)
+    train_ds = configure_dataset(train_ds, auto_shard_policy)
     
     valid_ds = create_unbatched_dataset(valid_dir)
     valid_ds = valid_ds.batch(batch_size)
-    valid_ds = configure_dataset_for_performance(valid_ds)
+    valid_ds = configure_dataset(valid_ds, auto_shard_policy)
     
     test_ds = create_unbatched_dataset(test_dir)
     test_ds = test_ds.batch(batch_size)
-    test_ds = configure_dataset_for_performance(test_ds)
+    test_ds = configure_dataset(test_ds, auto_shard_policy)
 
     return train_ds, valid_ds, test_ds
 
@@ -159,7 +173,8 @@ def main(argv):
         FLAGS.training_data_path,
         FLAGS.validation_data_path,
         FLAGS.testing_data_path,
-        global_batch_size)
+        global_batch_size,
+        auto_shard_policy[FLAGS.auto_shard_policy])
         
     num_train_steps = FLAGS.steps_per_epoch * FLAGS.epochs
     num_warmup_steps = int(0.1*num_train_steps)
