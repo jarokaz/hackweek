@@ -40,7 +40,7 @@ flags.DEFINE_string('testing_data_path', 'gs://jk-demos-bucket/data/imdb/test', 
 flags.DEFINE_string('job_dir', 'gs://jk-demos-bucket/jobs', 'A base GCS path for jobs')
 flags.DEFINE_enum('strategy', 'mirrored', ['mirrored', 'multiworker'], 'Distribution strategy')
 
-flags.DEFINE_bool('is_chief', True, 'Set on a chief worker in multi-worker setup')
+
 
 
 def create_unbatched_dataset(tfrecords_folder):
@@ -129,6 +129,9 @@ def copy_tensorboard_logs(local_path: str, gcs_path: str):
 def main(argv):
     del argv
     
+    def _is_chief(task_type, task_id):
+        return (task_type == 'worker' and task_id == 0) or task_type is None
+    
     logging.info('Setting up training.')
     logging.info('   epochs: {}'.format(FLAGS.epochs))
     logging.info('   steps_per_epoch: {}'.format(FLAGS.steps_per_epoch))
@@ -139,6 +142,19 @@ def main(argv):
         strategy = tf.distribute.MirroredStrategy()
     else:
         strategy = tf.distribute.MultiWorkerMirroredStrategy()
+        
+    if strategy.cluster_resolver:    
+        task_type, task_id = (strategy.cluster_resolver.task_type,
+                              strategy.cluster_resolver.task_id)
+    else:
+        task_type, task_id =(None, None)
+    
+    print('*************')
+    print(task_type, ' ', task_id)
+    print('**************')
+    print(strategy.num_replicas_in_sync)
+    
+    return
     
     global_batch_size = (strategy.num_replicas_in_sync *
                          FLAGS.per_replica_batch_size)
@@ -168,14 +184,12 @@ def main(argv):
                       loss=loss,
                       metrics=metrics)
         
-
-        
     # Configure BackupAndRestore callback
     backup_dir = '{}/backupandrestore'.format(FLAGS.job_dir)
     callbacks = [tf.keras.callbacks.experimental.BackupAndRestore(backup_dir=backup_dir)]
     
     # Configure TensorBoard callback on Chief
-    if FLAGS.is_chief:
+    if _is_chief(task_type, task_id):
         callbacks.append(tf.keras.callbacks.TensorBoard(
             log_dir=LOCAL_TB_FOLDER, update_freq='batch'))
     
@@ -188,12 +202,13 @@ def main(argv):
                         epochs=FLAGS.epochs,
                         callbacks=callbacks)
 
-    saved_model_dir = '{}/saved_model'.format(FLAGS.job_dir)
-    logging.info('Training completed. Saving the trained model to: {}'.format(saved_model_dir))
-    model.save(saved_model_dir)
+    if _is_chief(task_type, task_id):
+        # Save trained model
+        saved_model_dir = '{}/saved_model'.format(FLAGS.job_dir)
+        logging.info('Training completed. Saving the trained model to: {}'.format(saved_model_dir))
+        model.save(saved_model_dir)
     
-    # Copy tensorboard logs to GCS
-    if FLAGS.is_chief:
+        # Copy tensorboard logs to GCS
         tb_logs = '{}/tb_logs'.format(FLAGS.job_dir)
         logging.info('Copying TensorBoard logs to: {}'.format(tb_logs))
         copy_tensorboard_logs(LOCAL_TB_FOLDER, tb_logs)
