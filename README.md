@@ -29,20 +29,3 @@ pip install tf-models-official tensorflow-text --user
 ```
 
 
-### Cloning TF Model Garden repo
-
-```
-cd 
-
-export MODELS_BRANCH=master
-
-git clone -b $MODELS_BRANCH  --single-branch https://github.com/tensorflow/models.git
-
-```
-
-### Installin Model Garden dependencies
-
-```
-cd models
-pip install --user -r official/requirements.txt
-```
