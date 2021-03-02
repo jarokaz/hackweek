@@ -1,31 +1,4 @@
-# Using GCP GPUs
+# Large scale training with GPUs on Google Cloud
 
-## Setting up the experimentation environment
-
-### Setting up user credentials
-
-From the AI Platform Notebooks instance terminal:
-
-```
-gcloud auth login
-```
-### Provisioning AI Platform Notebooks instance
-
-TBD
-
-### Installing AI Platform (Unified) SDK
-
-From the AI Platform Notebooks instance terminal:
-
-```
-pip install -U google-cloud-aiplatform --user
-```
-
-
-### Install Model Garden
-
-```
-pip install tf-models-official tensorflow-text --user
-```
-
+This repo contains sample Jupyter notebooks demonstrating how to run large ML training jobs on Google Cloud using AI Platform Notebooks and AI Platform Training.
 
